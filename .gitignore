@@ -1,3 +1,4 @@
 src/node_modules/
 
-/.aws-sam/build/MessageProcessor/node_modules/
+/.aws-sam
+
