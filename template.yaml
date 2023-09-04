@@ -28,13 +28,6 @@ Resources:
     Type: AWS::Serverless::StateMachine
     Properties:
       Policies:
-        - Statement:
-            - Effect: Allow
-              Action:
-                - sqs:SendMessage
-              Resource: !GetAtt MessageQueue.Arn
-      Definition:
-        "Fn::Transform":
-          Name: AWS::Include
-          Parameters:
-            Location: ./stateMachine.yaml
+        - SQSSendMessagePolicy:
+            QueueName: !Ref MessageQueue
+      DefinitionUri: ./stateMachine.yaml
