@@ -24,33 +24,17 @@ Resources:
           Properties:
             Queue: !GetAtt MessageQueue.Arn
 
-  StatesExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - !Sub states.${AWS::Region}.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: StatesSQSPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - sqs:SendMessage
-                Resource: !GetAtt MessageQueue.Arn
-
   StateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
-      Role: !GetAtt StatesExecutionRole.Arn
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - sqs:SendMessage
+              Resource: !GetAtt MessageQueue.Arn
       Definition:
         "Fn::Transform":
           Name: AWS::Include
           Parameters:
-            Location: ./stateMachine.json
+            Location: ./stateMachine.yaml
