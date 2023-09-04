@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+
+Resources:
+  MessageQueue:
+    Type: AWS::SQS::Queue
+
+  MessageProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: app.handler
+      Runtime: nodejs18.x
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - states:SendTaskFailure
+                - states:SendTaskSuccess
+              Resource: !GetAtt StateMachine.Arn
+      Events:
+        PollQueue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt MessageQueue.Arn
+
+  StatesExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - !Sub states.${AWS::Region}.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StatesSQSPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                Resource: !GetAtt MessageQueue.Arn
+
+  StateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Role: !GetAtt StatesExecutionRole.Arn
+      Definition:
+        "Fn::Transform":
+          Name: AWS::Include
+          Parameters:
+            Location: ./stateMachine.json
